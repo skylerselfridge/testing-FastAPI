@@ -1,0 +1,8 @@
+venv/
+.env
+__pycache__
+.vscode
+pure_sql_no_orm.py
+alembic.ini
+docker-compose.yml
+.pytest_cache
