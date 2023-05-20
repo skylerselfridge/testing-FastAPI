@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <title>TestAPI - Error</title>
+</head>
+
+<body>
+    <h1 style="font-family: 'Poppins', sans-serif;">Error: {{ status_code }}</h1>
+    <p style="font-family: 'Poppins', sans-serif;">{
+        'detail': '{{ detail }}'
+        }
+    </p>
+    <p style="font-family: 'Poppins', sans-serif;">Check out the <a href="http://127.0.0.1:8000/docs">docs</a></p>
+</body>
+
+</html>

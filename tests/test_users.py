@@ -1,17 +1,7 @@
 from fastapi import HTTPException, status
 from app import schemas
-from .database import client, session
-import pytest
 from app import oauth2
-
-
-@pytest.fixture
-def test_user(client):
-    user_data = {"email": "test1@test.com", "password": "password123"}
-    res = client.post("/users/", json=user_data)
-    new_user = res.json()
-    new_user["password"] = user_data["password"]
-    return new_user
+import pytest
 
 
 def test_root(client):
@@ -48,3 +38,22 @@ def test_login_user(client, test_user):
     )
     assert login_response.token_type == "bearer"
     assert res.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "email,password,status_code",
+    [
+        ("wrongemail@email.com", "password123", 403),
+        ("test1@test.com", "wrongpassword", 403),
+        ("wrong@wrong.com", "wrongpassword", 403),
+        (None, "password123", 422),
+        ("test1@test.com", None, 422),
+        (None, None, 422),
+    ],
+)
+def test_incorrect_login(client, email, password, status_code):
+    response_wrong_password = client.post(
+        "/login", data={"username": email, "password": password}
+    )
+
+    assert response_wrong_password.status_code == status_code

@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException, status, APIRouter
+from fastapi import Depends, HTTPException, Request, status, APIRouter
 from app import utils
 from app import models
 from app.schemas import Post, PostCreate, PostOut
@@ -8,11 +8,13 @@ from app.database import get_db
 from app import oauth2
 from sqlalchemy import func
 
+
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 @router.get("/", response_model=List[PostOut])
 async def get_posts(
+    request: Request,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
     limit: int = 10,
@@ -27,7 +29,6 @@ async def get_posts(
         .limit(limit)
         .offset(skip)
     ).all()
-
     return results
 
 
@@ -62,13 +63,17 @@ async def get_post(
     current_user=Depends(oauth2.get_current_user),
 ):
     utils.testUUID(id)
-    results = (
-        db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
-        .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
-        .group_by(models.Post.id)
-        .filter(models.Post.id == id)
-    ).one()
-
+    try:
+        results = (
+            db.query(models.Post, func.count(models.Vote.post_id).label("votes"))
+            .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
+            .group_by(models.Post.id)
+            .filter(models.Post.id == id)
+        ).one()
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+        )
     if results:
         return results
 
@@ -97,11 +102,13 @@ async def delete_post(
 ):
     utils.testUUID(id)
     query = db.query(models.Post).filter(models.Post.id == id)
-    if not query.first():
+    post = query.first()
+    if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
         )
-    if query.user_id != current_user.id:
+
+    if post.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
         )

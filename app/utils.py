@@ -1,5 +1,5 @@
 import uuid
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Request
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -22,3 +22,9 @@ def testUUID(id):
             "type": "argument_error.invalid",
         }
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=d)
+
+
+def is_browser(request: Request):
+    if "Mozilla" in request.headers.get("User-Agent"):
+        return True
+    return False

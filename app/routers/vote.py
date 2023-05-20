@@ -1,4 +1,5 @@
 from typing import List, Optional
+from uuid import UUID
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status, APIRouter
 from app import utils
@@ -6,6 +7,7 @@ from app import models
 from app.schemas import Vote
 from app.database import get_db
 from app import oauth2
+
 
 router = APIRouter(prefix="/vote", tags=["Vote"])
 
@@ -16,7 +18,7 @@ def vote(
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    post_exist = db.query(models.Post).filter(models.Post == vote.post_id)
+    post_exist = db.query(models.Post).filter(models.Post.id == vote.post_id)
     if not post_exist.first():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Post does not exist"
