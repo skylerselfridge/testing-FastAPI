@@ -1,38 +1,17 @@
-from fastapi.testclient import TestClient
-from app.main import app
+from fastapi import HTTPException, status
 from app import schemas
-from app.config import settings
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from app.database import get_db, Base
+from .database import client, session
 import pytest
-
-SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.DB_USERNAME}:{settings.DB_PASSWORD}@{settings.DB_HOSTNAME}:{settings.DB_PORT}/{settings.TEST_DB_NAME}"
-
-print(SQLALCHEMY_DATABASE_URL)
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-Base.metadata.create_all(bind=engine)
-
-
-def override_get_db():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
+from app import oauth2
 
 
 @pytest.fixture
-def client():
-    return TestClient(app)
+def test_user(client):
+    user_data = {"email": "test1@test.com", "password": "password123"}
+    res = client.post("/users/", json=user_data)
+    new_user = res.json()
+    new_user["password"] = user_data["password"]
+    return new_user
 
 
 def test_root(client):
@@ -43,9 +22,29 @@ def test_root(client):
 
 def test_create_user(client):
     res = client.post(
-        "/users", json={"email": "test1@test.com", "password": "password123"}
+        "/users/", json={"email": "test1@test.com", "password": "password123"}
     )
-    print(res.json())
     user = schemas.UserData(**res.json())
-
     assert res.status_code == 201
+
+
+def test_login_user(client, test_user):
+    res = client.post(
+        "/login/",
+        data={"username": test_user["email"], "password": test_user["password"]},
+    )
+    login_response = schemas.Token(**res.json())
+    # verify token
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    assert (
+        oauth2.verify_access_token(
+            login_response.access_token, credentials_exception=credentials_exception
+        ).user_id
+        == test_user["id"]
+    )
+    assert login_response.token_type == "bearer"
+    assert res.status_code == 200
