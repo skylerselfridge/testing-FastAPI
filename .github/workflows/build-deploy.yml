@@ -13,7 +13,7 @@ jobs:
       TEST_DB_NAME=${{secrets.TEST_DB_NAME}}
       SECRET_KEY=${{secrets.SECRET_KEY}}
       TOKEN_ALGORITHM=${{secrets.TOKEN_ALGORITHM}}
-      TOKEN_EXPIRE=${{secrects.TOKEN_EXPIRE}}
+      TOKEN_EXPIRE=${{secrets.TOKEN_EXPIRE}}
     services: 
       postgres:
         image: postgres
