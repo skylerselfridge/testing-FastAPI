@@ -33,6 +33,10 @@ jobs:
 
     
     steps:
+      - name: Install uuid to pgsql
+        run: |
+          PGPASSWORD=${{secrets.DB_PASSWORD}} -h ${{secrets.DB_HOSTNAME}} -p ${{secrets.DB_HOSTNAME}} -U ${{secrets.DB_USERNAME}} -d ${{secrets.TEST_DB_NAME}}
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
       - name: Pulling git repo
         uses: actions/checkout@v3
       - name: Install python v3.11
