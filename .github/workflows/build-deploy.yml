@@ -1,0 +1,51 @@
+name: Build and Deploy Code
+run-name: ${{ github.repository }} Build n Deploy 🚀
+on: [push]
+
+jobs:
+  do-tests:
+    env: 
+      DB_HOSTNAME=${{secrets.DB_HOSTNAME}}
+      DB_PORT=${{secrets.DB_PORT}}
+      DB_PASSWORD=${{secrets.DB_PASSWORD}}
+      DB_NAME=${{secrets.DB_NAME}}
+      DB_USERNAME=${{secrets.DB_USERNAME}}
+      TEST_DB_NAME=${{secrets.TEST_DB_NAME}}
+      SECRET_KEY=${{secrets.SECRET_KEY}}
+      TOKEN_ALGORITHM=${{secrets.TOKEN_ALGORITHM}}
+      TOKEN_EXPIRE=${{secrects.TOKEN_EXPIRE}}
+    services: 
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: ${{secrets.DB_PASSWORD}}
+          POSTGRES_DB: ${{secrets.TEST_DB_NAME}}
+        ports:
+          - 5432:5432
+
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pulling git repo
+        uses: actions/checkout@v3
+      - name: Install python v3.11
+        uses: actions/setup-python@v4
+        with: 
+          python-version: "3.11"
+      - name: Update pip ✅
+        run: python -m pip install --upgrade pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Unit tests 🔎
+        run: | 
+          pip install pytest
+          pytest
+        
+  
+    
